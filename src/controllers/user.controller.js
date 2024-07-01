@@ -19,6 +19,9 @@ const registerUser= asyncHandler( async (req, res) => {
     console.log("Fullname: ", fullname);
     console.log("Password: ", password)
     console.log("Email: ", email )
+    console.log("Username: ", username)
+    // console.log(req.body)
+
 
     if([fullname, email, password, username].some((field) => field.trim() === "")) {
         throw new ApiError(400,"All fields are required")
@@ -27,7 +30,7 @@ const registerUser= asyncHandler( async (req, res) => {
         throw new ApiError(400,"Don't seem like a email Id")
     }
 
-    const existedUser=User.findOne({
+    const existedUser=await User.findOne({
         $or: [{username}, {email}]
     })
     if(existedUser) {
@@ -35,7 +38,10 @@ const registerUser= asyncHandler( async (req, res) => {
     };
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImagePath = req.files?.coverImageavatar[0]?.path; 
+    let coverImagePath; 
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImagePath = req.files.coverImage[0].path;
+    }
     //do afterward console.log(req.files)
 
     if(!avatarLocalPath) {
@@ -44,14 +50,20 @@ const registerUser= asyncHandler( async (req, res) => {
 
     const isAvatarUploadedInCloudinary = await uploadOnCloudinary(avatarLocalPath)
 
-    const isCoverImageUploadedInCloudinary = await uploadOnCloudinary(coverImagePath)
+    let coverImageURL
+
+    if(coverImagePath)
+    {
+        const isCoverImageUploadedInCloudinary = await uploadOnCloudinary(coverImagePath);
+        coverImageURL = isCoverImageUploadedInCloudinary.url
+    }
 
     if(!isAvatarUploadedInCloudinary) throw new ApiError(500, "Sorry for the inconvenience, Can't upload ur avatar")
 
     const user = await User.create({
         fullname,
         avatar: isAvatarUploadedInCloudinary.url,
-        coverImage: isCoverImageUploadedInCloudinary.url || "",
+        coverImage: coverImageURL  || "" ,
         email,
         password,
         username: username.toLowerCase()

@@ -1,4 +1,4 @@
-import mongoose, {Schema, model} from "mongoose";
+import mongoose, {Schema} from "mongoose";
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 
@@ -84,4 +84,4 @@ const userSchema = new Schema(
         )
     }
 
-export const User = model('User', userSchema) // Maybe change needed
+export const User = mongoose.model('User', userSchema) // Maybe change needed
